@@ -45,22 +45,31 @@ function PaginationLink({
   ...props
 }: PaginationLinkProps) {
   return (
-    <Button
-      variant={isActive ? "outline" : "ghost"}
-      size={size}
-      className={cn(className)}
-      nativeButton={false}
-      render={
-        <a
-          aria-current={isActive ? "page" : undefined}
-          data-slot="pagination-link"
-          data-active={isActive}
-          {...props}
-        />
-      }
+    <a
+      aria-current={isActive ? "page" : undefined}
+      data-slot="pagination-link"
+      data-active={isActive}
+      className={cn(
+        // Match the Button component's styling
+        "inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all outline-none hover:bg-accent hover:text-accent-foreground focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] disabled:pointer-events-none disabled:opacity-50",
+        {
+          default: "h-9 px-4 py-2",
+          sm: "h-8 rounded-md gap-1.5 px-3",
+          lg: "h-10 rounded-md px-6",
+          icon: "size-9",
+          "icon-sm": "size-8",
+          "icon-lg": "size-10",
+        }[size ?? "icon"],
+        isActive
+          ? "border border-input bg-background shadow-xs"
+          : "border border-transparent",
+        className
+      )}
+      {...props}
     />
   )
 }
+
 
 function PaginationPrevious({
   className,
