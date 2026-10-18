@@ -80,10 +80,10 @@ export async function POST(req: NextRequest) {
       }
 
       // Convert uploaded file into a Node.js Buffer
-      const bytes = Buffer.from(await file.arrayBuffer());
+     // const bytes = Buffer.from(await file.arrayBuffer());
 
       try {
-       const summary = await summarizeMarkdown(bytes);
+       const summary = await summarizeMarkdown("");
 
 await db.insert(knowledge_source).values({
   user_email: user.email,
