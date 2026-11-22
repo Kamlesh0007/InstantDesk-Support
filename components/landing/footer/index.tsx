@@ -1,6 +1,6 @@
 import Link from "next/link";
 import React from "react";
-import { Logo } from "../nav";
+import { Logo } from "../nav/NavbarClient";
 
 const Footer = () => {
   return (

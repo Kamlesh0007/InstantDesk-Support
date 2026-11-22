@@ -13,7 +13,7 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import React, { useEffect, useState } from "react";
-import { Logo } from "../landing/nav";
+import { Logo } from "../landing/nav/NavbarClient";
 
 // Sidebar navigation configuration.
 // Using a configuration array makes it easy to add, remove,
