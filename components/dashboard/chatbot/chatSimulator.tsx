@@ -1,9 +1,17 @@
+
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
-import { Bot, RefreshCw, Send, User } from "lucide-react";
+
+import {
+  Bot,
+  RefreshCw,
+  Send,
+  User,
+  MessageSquare,
+} from "lucide-react";
+
 import React, { RefObject } from "react";
 
 interface ChatSimulatorProps {
@@ -36,80 +44,128 @@ const ChatSimulator = ({
   scrollRef,
 }: ChatSimulatorProps) => {
   return (
-    <Card className="flex-1 flex flex-col border-white/5 bg-[#0A0A0E] overflow-hidden relative shadow-2xl">
-      <div className="h-14 border-b border-white/5 flex items-center justify-between px-6 bg-[#0E0E12]">
-        <div className="flex items-center gap-2">
-          <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-          <span className="text-sm font-medium text-zinc-300">
-            Test Environment
-          </span>
+    <Card className="relative flex h-full min-h-0 w-full min-w-0 flex-col overflow-hidden rounded-2xl border border-white/[0.08] bg-[#0A0A0E] shadow-2xl">
+
+      {/* HEADER - Always visible */}
+      <div className="flex h-14 shrink-0 items-center justify-between border-b border-white/[0.07] bg-[#0E0E12] px-3 sm:px-5">
+
+        <div className="flex min-w-0 items-center gap-2.5">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-emerald-500/15 bg-emerald-500/10">
+            <Bot className="h-4 w-4 text-emerald-400" />
+          </div>
+
+          <div className="min-w-0">
+            <p className="truncate text-xs font-semibold text-white sm:text-sm">
+              Test Environment
+            </p>
+
+            <div className="flex items-center gap-1.5">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+              <span className="text-[10px] text-zinc-500">
+                Online
+              </span>
+            </div>
+          </div>
         </div>
+
         <Button
+          type="button"
           variant="ghost"
           size="sm"
           onClick={handleReset}
-          className="h-8 text-zinc-500 hover:text-white hover:bg-white/10"
+          className="h-9 shrink-0 rounded-lg px-2 text-xs text-zinc-400 hover:bg-white/[0.06] hover:text-white sm:px-3"
         >
-          <RefreshCw className="w-3.5 h-3.5 mr-2" />
+          <RefreshCw className="mr-1.5 h-3.5 w-3.5" />
           Reset
         </Button>
       </div>
 
-      <ScrollArea className="flex-1 p-6 min-h-0 relative bg-zinc-950/30">
-        <div className="space-y-6 pb-4">
+      {/* CHAT MESSAGES - Independently scrollable */}
+      <div className="relative min-h-0 min-w-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain bg-zinc-950/30">
+
+        <div className="flex min-h-full flex-col gap-5 px-3 py-4 sm:gap-6 sm:px-5 sm:py-6">
+
+          {/* Messages */}
           {messages.map((msg, i) => (
             <div
               key={i}
               className={cn(
-                "flex w-full flex-col",
+                "flex w-full min-w-0 flex-col",
                 msg.role === "user" ? "items-end" : "items-start"
               )}
             >
               <div
                 className={cn(
-                  "flex max-w-[80%] gap-3",
-                  msg.role === "user" ? "flex-row-reverse" : "flex-row"
+                  "flex w-full min-w-0 gap-2.5 sm:gap-3",
+                  msg.role === "user"
+                    ? "flex-row-reverse"
+                    : "flex-row"
                 )}
               >
+                {/* Avatar */}
                 <div
                   className={cn(
-                    "w-8 h-8 rounded-full flex items-center justify-center shrink-0 border border-white/5",
+                    "flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/5",
                     msg.role === "user" ? "bg-zinc-800" : "text-white"
                   )}
                   style={
-                    msg.role !== "user" ? { backgroundColor: primaryColor } : {}
+                    msg.role !== "user"
+                      ? { backgroundColor: primaryColor }
+                      : {}
                   }
                 >
                   {msg.role === "user" ? (
-                    <User className="w-4 h-4 text-zinc-400" />
+                    <User className="h-4 w-4 text-zinc-400" />
                   ) : (
-                    <Bot className="w-4 h-4 text-white" />
+                    <Bot className="h-4 w-4 text-white" />
                   )}
                 </div>
 
-                <div className="space-y-2">
+                {/* Message Content */}
+                <div className="flex min-w-0 max-w-[88%] flex-col gap-2 sm:max-w-[80%]">
+
                   <div
                     className={cn(
-                      "p-4 rounded-2xl text-sm leading-relaxed shadow-sm",
+                      "min-w-0 break-words rounded-2xl px-3.5 py-3 text-sm leading-relaxed shadow-sm [overflow-wrap:anywhere] sm:px-4",
                       msg.role === "user"
-                        ? "bg-zinc-800 text-zinc-200 rounded-tr-sm"
-                        : "bg-white text-zinc-900 rounded-tl-sm"
+                        ? "rounded-tr-sm bg-zinc-800 text-zinc-100"
+                        : "rounded-tl-sm bg-white text-zinc-900"
                     )}
                   >
                     {msg.content}
                   </div>
 
+                  {/* Section Selection */}
                   {msg.isWelcome && sections.length > 0 && (
-                    <div className="flex flex-wrap gap-2 pt-1 ml-1 animate-in fade-in slide-in-from-top-1 duration-300">
-                      {sections.map((section) => (
-                        <button
-                          key={section.id}
-                          onClick={() => handleSectionClick(section.name)}
-                          className="px-3 py-1.5 rounded-full border border-zinc-700 bg-zinc-800/50 hover:bg-zinc-700 hover:border-zinc-600 text-zinc-300 text-xs font-medium transition-all"
-                        >
-                          {section.name}
-                        </button>
-                      ))}
+                    <div className="ml-1 flex flex-wrap gap-2 pt-1">
+
+                      <p className="w-full text-[11px] font-medium text-zinc-500">
+                        Choose a topic to get started
+                      </p>
+
+                      {sections.map((section) => {
+                        const isActive =
+                          activeSection === section.name;
+
+                        return (
+                          <button
+                            key={section.id}
+                            type="button"
+                            onClick={() =>
+                              handleSectionClick(section.name)
+                            }
+                            className={cn(
+                              "max-w-full rounded-full border px-3 py-2 text-left text-xs font-medium transition-all duration-200",
+                              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500",
+                              isActive
+                                ? "border-violet-500/40 bg-violet-500/15 text-violet-300"
+                                : "border-white/10 bg-zinc-800/70 text-zinc-300 hover:border-violet-500/30 hover:bg-violet-500/10 hover:text-white"
+                            )}
+                          >
+                            {section.name}
+                          </button>
+                        );
+                      })}
                     </div>
                   )}
                 </div>
@@ -117,58 +173,96 @@ const ChatSimulator = ({
             </div>
           ))}
 
+          {/* Typing Indicator */}
           {isTyping && (
-            <div className="flex w-full justify-start">
-              <div className="flex max-w-[80%] gap-3 flex-row">
+            <div className="flex w-full min-w-0 justify-start">
+              <div className="flex max-w-[85%] items-start gap-2.5 sm:gap-3">
+
                 <div
-                  className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 border border-white/5"
+                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full"
                   style={{ backgroundColor: primaryColor }}
                 >
-                  <Bot className="w-4 h-4 text-white" />
+                  <Bot className="h-4 w-4 text-white" />
                 </div>
-                <div className="p-4 rounded-2xl bg-white text-zinc-900 rounded-tl-sm shadow-sm flex items-end gap-1">
-                  <div className="w-1.5 h-1.5 bg-zinc-400 rounded-full animate-bounce [animation-delay:-0.3s]" />
-                  <div className="w-1.5 h-1.5 bg-zinc-400 rounded-full animate-bounce [animation-delay:-0.15s]" />
-                  <div className="w-1.5 h-1.5 bg-zinc-400 rounded-full animate-bounce" />
+
+                <div className="flex items-center gap-1 rounded-2xl rounded-tl-sm bg-white px-4 py-4 shadow-sm">
+                  <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-zinc-400 [animation-delay:-0.3s]" />
+                  <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-zinc-400 [animation-delay:-0.15s]" />
+                  <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-zinc-400" />
                 </div>
               </div>
             </div>
           )}
-          <div ref={scrollRef} />
-        </div>
-      </ScrollArea>
 
-      <div className="p-4 bg-[#0A0A0E] border-t border-white/5">
-        <div className="relative">
+          {/* Scroll Target */}
+          <div ref={scrollRef} className="h-px shrink-0" />
+        </div>
+      </div>
+
+      {/* INPUT AREA - Always visible at bottom */}
+      <div className="relative z-10 shrink-0 border-t border-white/[0.08] bg-[#0A0A0E] p-3 sm:p-4">
+
+        {activeSection && (
+          <div className="mb-2 flex min-w-0 items-center gap-2">
+            <MessageSquare className="h-3.5 w-3.5 shrink-0 text-violet-400" />
+
+            <span className="truncate text-[11px] text-zinc-500">
+              Asking about:
+            </span>
+
+            <span className="truncate text-[11px] font-medium text-violet-300">
+              {activeSection}
+            </span>
+          </div>
+        )}
+
+        <div
+          className={cn(
+            "relative flex min-w-0 items-end gap-2 rounded-xl border p-1.5 transition-colors",
+            activeSection
+              ? "border-white/10 bg-zinc-900/80 focus-within:border-violet-500/40"
+              : "border-white/[0.06] bg-zinc-900/40"
+          )}
+        >
           <Textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            disabled={!activeSection}
+            disabled={!activeSection || isTyping}
             placeholder={
               activeSection
-                ? "Type a message..."
-                : "Please select a category above to start..."
+                ? "Type your question..."
+                : "Select a topic above to start chatting..."
             }
-            className="min-h-12.5 max-h-37.5 pr-12 outline-none text-white bg-zinc-900/50 border-white/10 resize-none rounded-xl disabled:opacity-50 disabled:cursor-not-allowed"
+            rows={1}
+            className="min-h-[42px] max-h-28 min-w-0 flex-1 resize-none border-0 bg-transparent px-3 py-2.5 text-sm leading-relaxed text-white shadow-none outline-none placeholder:text-zinc-500 focus-visible:ring-0 disabled:cursor-not-allowed disabled:opacity-50"
           />
+
           <Button
+            type="button"
             size="icon"
             onClick={handleSend}
-            disabled={!activeSection || !input.trim()}
+            disabled={!activeSection || !input.trim() || isTyping}
+            aria-label="Send message"
             className={cn(
-              "absolute right-2 bottom-2 h-8 w-8 transition-colors",
-              !activeSection || !input.trim() ? "bg-zinc-800 text-zinc-500" : ""
+              "mb-0.5 h-9 w-9 shrink-0 rounded-lg transition-all",
+              !activeSection || !input.trim() || isTyping
+                ? "bg-zinc-800 text-zinc-500"
+                : "text-white hover:opacity-90"
             )}
             style={
-              activeSection && input.trim()
-                ? { backgroundColor: primaryColor, color: "white" }
+              activeSection && input.trim() && !isTyping
+                ? { backgroundColor: primaryColor }
                 : {}
             }
           >
-            <Send className="w-4 h-4" />
+            <Send className="h-4 w-4" />
           </Button>
         </div>
+
+        <p className="mt-2 text-center text-[10px] text-zinc-600">
+          Press Enter to send · Shift + Enter for a new line
+        </p>
       </div>
     </Card>
   );
