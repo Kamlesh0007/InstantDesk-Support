@@ -117,7 +117,7 @@ const WorkspaceCard = ({
 }: {
   metadata: any;
   isLoading: boolean;
-  email?: string;
+  email?: string | null;
   mobile?: boolean;
 }) => (
   <div
