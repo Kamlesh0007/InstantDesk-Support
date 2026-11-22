@@ -23,7 +23,6 @@ import {
 } from "@/components/ui/dialog";
 
 import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
 
 import {
   Table,
@@ -36,11 +35,14 @@ import {
 
 import {
   ArrowUpRight,
+  Check,
   Database,
   File,
   Filter,
   Globe,
+  RotateCcw,
   Search,
+  SlidersHorizontal,
   Upload,
 } from "lucide-react";
 
@@ -148,8 +150,15 @@ const KnowledgeTable = ({
   isLoading,
 }: KnowledgeTableProps) => {
   const [searchQuery, setSearchQuery] = useState("");
+
+  // Applied filters
   const [typeFilters, setTypeFilters] = useState<SourceType[]>([]);
   const [statusFilters, setStatusFilters] = useState<SourceStatus[]>([]);
+
+  // Draft filters inside dialog
+  const [draftTypeFilters, setDraftTypeFilters] = useState<SourceType[]>([]);
+  const [draftStatusFilters, setDraftStatusFilters] = useState<SourceStatus[]>([]);
+
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   // --------------------------------------------------
@@ -157,7 +166,7 @@ const KnowledgeTable = ({
   // --------------------------------------------------
 
   const toggleTypeFilter = (type: SourceType) => {
-    setTypeFilters((prev) =>
+    setDraftTypeFilters((prev) =>
       prev.includes(type)
         ? prev.filter((t) => t !== type)
         : [...prev, type]
@@ -165,20 +174,46 @@ const KnowledgeTable = ({
   };
 
   const toggleStatusFilter = (status: SourceStatus) => {
-    setStatusFilters((prev) =>
+    setDraftStatusFilters((prev) =>
       prev.includes(status)
         ? prev.filter((s) => s !== status)
         : [...prev, status]
     );
   };
 
-  const activeFilterCount =
-    typeFilters.length + statusFilters.length;
+  // Open dialog and copy currently applied filters
+  const openFilterDialog = () => {
+    setDraftTypeFilters([...typeFilters]);
+    setDraftStatusFilters([...statusFilters]);
+    setIsFilterOpen(true);
+  };
 
+  // Apply draft filters
+  const applyFilters = () => {
+    setTypeFilters([...draftTypeFilters]);
+    setStatusFilters([...draftStatusFilters]);
+    setIsFilterOpen(false);
+  };
+
+  // Clear draft selections inside dialog
+  const clearDraftFilters = () => {
+    setDraftTypeFilters([]);
+    setDraftStatusFilters([]);
+  };
+
+  // Clear applied filters immediately (outside dialog)
   const clearFilters = () => {
     setTypeFilters([]);
     setStatusFilters([]);
+    setDraftTypeFilters([]);
+    setDraftStatusFilters([]);
   };
+
+  const activeFilterCount =
+    typeFilters.length + statusFilters.length;
+
+  const draftFilterCount =
+    draftTypeFilters.length + draftStatusFilters.length;
 
   // --------------------------------------------------
   // Search and Filter Sources
@@ -275,17 +310,13 @@ const KnowledgeTable = ({
           key={source.id}
           className="relative w-full min-w-0 max-w-full overflow-hidden rounded-2xl border border-white/[0.08] bg-gradient-to-br from-[#171721] via-[#111119] to-[#0b0b10] p-3.5 shadow-lg shadow-black/10 transition-all duration-200 sm:p-4"
         >
-          {/* Top Highlight */}
           <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
 
-          {/* Source Header */}
           <div className="flex min-w-0 items-start gap-2.5 sm:gap-3">
-            {/* Icon */}
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-indigo-500/20 bg-indigo-500/[0.08] sm:h-11 sm:w-11">
               {getTypeIcon(source.type as SourceType)}
             </div>
 
-            {/* Name and URL */}
             <div className="min-w-0 flex-1 overflow-hidden pt-0.5">
               <h3 className="truncate text-sm font-semibold text-zinc-100">
                 {source.name || "Untitled source"}
@@ -296,16 +327,13 @@ const KnowledgeTable = ({
               </p>
             </div>
 
-            {/* Status */}
             <div className="max-w-[100px] shrink-0">
               {getStatusBadge(source.status as SourceStatus)}
             </div>
           </div>
 
-          {/* Divider */}
           <div className="my-4 h-px w-full bg-white/[0.06]" />
 
-          {/* Footer */}
           <div className="flex min-w-0 flex-wrap items-center justify-between gap-3">
             <div className="flex min-w-0 flex-col gap-1.5">
               <span className="w-fit rounded-md border border-white/[0.07] bg-white/[0.03] px-2 py-1 text-[10px] font-medium uppercase tracking-wider text-zinc-400">
@@ -439,8 +467,8 @@ const KnowledgeTable = ({
 
   return (
     <Card className="w-full min-w-0 max-w-full overflow-hidden rounded-2xl border-white/[0.07] bg-[#0A0A0E] shadow-xl shadow-black/10">
-      {/* Header */}
       <CardHeader className="w-full min-w-0 space-y-4 p-3 sm:p-5">
+        {/* Header */}
         <div className="flex min-w-0 items-center justify-between gap-3">
           <div className="min-w-0">
             <div className="flex items-center gap-2">
@@ -483,9 +511,10 @@ const KnowledgeTable = ({
           </div>
 
           <Button
+            type="button"
             variant="outline"
             size="icon"
-            onClick={() => setIsFilterOpen(true)}
+            onClick={openFilterDialog}
             className="relative h-11 w-11 shrink-0 rounded-xl border-white/[0.08] bg-white/[0.035] text-zinc-400 hover:bg-white/10 hover:text-white"
           >
             <Filter className="h-4 w-4" />
@@ -499,97 +528,143 @@ const KnowledgeTable = ({
         </div>
 
         {/* Filter Dialog */}
-        <Dialog open={isFilterOpen} onOpenChange={setIsFilterOpen}>
-          <DialogContent className="w-[calc(100%-2rem)] max-w-sm border-white/10 bg-[#0e0e12]">
-            <DialogHeader>
-              <DialogTitle className="text-white">
-                Filter sources
-              </DialogTitle>
-            </DialogHeader>
+<Dialog open={isFilterOpen} onOpenChange={setIsFilterOpen}>
+  <DialogContent className="flex w-[calc(100vw-1.5rem)] max-w-[480px] flex-col gap-0 overflow-hidden rounded-2xl border border-white/10 bg-[#111116] p-0 text-white shadow-2xl shadow-black/50 max-h-[85dvh] sm:max-h-[85dvh]">
 
-            <div className="space-y-5 py-2">
-              {/* Type Filters */}
-              <div className="space-y-3">
-                <p className="text-xs font-medium uppercase tracking-wider text-zinc-500">
-                  Source Type
-                </p>
+    {/* Header */}
+    <DialogHeader className="shrink-0 border-b border-white/[0.06] px-5 py-4 sm:px-6">
+      <div className="flex items-center gap-3">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-500/10 text-violet-400">
+          <SlidersHorizontal className="h-5 w-5" />
+        </div>
 
-                <div className="space-y-3">
-                  {ALL_TYPES.map((type) => (
-                    <div
-                      key={type}
-                      className="flex items-center gap-3"
-                    >
-                      <Checkbox
-                        id={`type-${type}`}
-                        checked={typeFilters.includes(type)}
-                        onCheckedChange={() => toggleTypeFilter(type)}
-                      />
+        <div className="min-w-0 space-y-1 text-left">
+          <DialogTitle className="text-base font-semibold text-white">
+            Filter sources
+          </DialogTitle>
+          <p className="text-xs text-zinc-500">
+            Customize which knowledge sources you want to see.
+          </p>
+        </div>
+      </div>
+    </DialogHeader>
 
-                      <Label
-                        htmlFor={`type-${type}`}
-                        className="cursor-pointer font-normal capitalize text-zinc-300"
-                      >
-                        {type}
-                      </Label>
-                    </div>
-                  ))}
+    {/* Scrollable Content */}
+    <div className="min-h-0 flex-1 space-y-6 overflow-y-auto overscroll-contain px-5 py-5 sm:px-6">
+
+      {/* Source Type */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-zinc-500">
+            Source type
+          </p>
+
+          <span className="text-xs text-zinc-500">
+            {draftTypeFilters.length} selected
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 gap-2">
+          {ALL_TYPES.map((type) => (
+            <div
+              key={type}
+              onClick={() => toggleTypeFilter(type)}
+              className={`flex cursor-pointer items-center justify-between gap-3 rounded-xl border px-4 py-3 transition-all ${
+                draftTypeFilters.includes(type)
+                  ? "border-violet-500/40 bg-violet-500/[0.08]"
+                  : "border-white/[0.06] bg-white/[0.02] hover:border-white/15 hover:bg-white/[0.04]"
+              }`}
+            >
+              <div className="flex min-w-0 items-center gap-3">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white/[0.05]">
+                  {getTypeIcon(type)}
                 </div>
+
+                <span className="text-sm font-medium capitalize text-zinc-200">
+                  {type}
+                </span>
               </div>
 
-              <div className="h-px bg-white/[0.06]" />
-
-              {/* Status Filters */}
-              <div className="space-y-3">
-                <p className="text-xs font-medium uppercase tracking-wider text-zinc-500">
-                  Source Status
-                </p>
-
-                <div className="space-y-3">
-                  {ALL_STATUSES.map((status) => (
-                    <div
-                      key={status}
-                      className="flex items-center gap-3"
-                    >
-                      <Checkbox
-                        id={`status-${status}`}
-                        checked={statusFilters.includes(status)}
-                        onCheckedChange={() =>
-                          toggleStatusFilter(status)
-                        }
-                      />
-
-                      <Label
-                        htmlFor={`status-${status}`}
-                        className="cursor-pointer font-normal capitalize text-zinc-300"
-                      >
-                        {status}
-                      </Label>
-                    </div>
-                  ))}
-                </div>
-              </div>
+              <Checkbox
+                id={`type-${type}`}
+                checked={draftTypeFilters.includes(type)}
+                onClick={(e) => e.stopPropagation()}
+                onCheckedChange={() => toggleTypeFilter(type)}
+                className="shrink-0 border-zinc-600 data-[state=checked]:border-violet-500 data-[state=checked]:bg-violet-500"
+              />
             </div>
+          ))}
+        </div>
+      </div>
 
-            <DialogFooter className="flex-row justify-between gap-2 sm:justify-between">
-              <Button
-                variant="ghost"
-                onClick={clearFilters}
-                disabled={activeFilterCount === 0}
-                className="text-zinc-400 hover:text-white"
-              >
-                Clear filters
-              </Button>
+      <div className="h-px bg-white/[0.06]" />
 
-              <Button
-                onClick={() => setIsFilterOpen(false)}
-                className="bg-white text-black hover:bg-zinc-200"
-              >
-                Apply filters
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+      {/* Source Status */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-zinc-500">
+            Source status
+          </p>
+
+          <span className="text-xs text-zinc-500">
+            {draftStatusFilters.length} selected
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 gap-2">
+          {ALL_STATUSES.map((status) => (
+            <div
+              key={status}
+              onClick={() => toggleStatusFilter(status)}
+              className={`flex cursor-pointer items-center justify-between gap-3 rounded-xl border px-4 py-3 transition-all ${
+                draftStatusFilters.includes(status)
+                  ? "border-violet-500/40 bg-violet-500/[0.08]"
+                  : "border-white/[0.06] bg-white/[0.02] hover:border-white/15 hover:bg-white/[0.04]"
+              }`}
+            >
+              <span className="text-sm font-medium capitalize text-zinc-200">
+                {status}
+              </span>
+
+              <Checkbox
+                id={`status-${status}`}
+                checked={draftStatusFilters.includes(status)}
+                onClick={(e) => e.stopPropagation()}
+                onCheckedChange={() => toggleStatusFilter(status)}
+                className="shrink-0 border-zinc-600 data-[state=checked]:border-violet-500 data-[state=checked]:bg-violet-500"
+              />
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+
+    {/* Fixed Footer */}
+    <DialogFooter className="shrink-0 flex-row items-center justify-between gap-3 border-t border-white/[0.06] bg-[#111116] px-5 py-4 sm:px-6">
+
+      <Button
+        type="button"
+        variant="ghost"
+        onClick={clearDraftFilters}
+        disabled={draftFilterCount === 0}
+        className="h-10 rounded-xl px-3 text-sm text-zinc-400 hover:bg-white/[0.06] hover:text-white disabled:opacity-40"
+      >
+        <RotateCcw className="mr-2 h-4 w-4" />
+        Clear all
+      </Button>
+
+      <Button
+        type="button"
+        onClick={applyFilters}
+        className="h-10 rounded-xl bg-violet-600 px-5 text-sm font-semibold text-white shadow-lg shadow-violet-600/20 transition hover:bg-violet-500"
+      >
+        Apply filters
+        <Check className="ml-2 h-4 w-4" />
+      </Button>
+
+    </DialogFooter>
+  </DialogContent>
+</Dialog>
       </CardHeader>
 
       {/* Content */}
