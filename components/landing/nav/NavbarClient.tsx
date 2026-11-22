@@ -1,11 +1,76 @@
-
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 
+// Sign in / Get started links.
+//
+// /api/auth is a route handler (it redirects to the auth provider), not a page,
+// so it must NOT be a next/link <Link>: Link tries to prefetch it and navigate
+// client-side, which fires the auth handler in the background and can leave the
+// UI sitting on the same page. A plain <a> does a normal full-page navigation.
+// It also shows instant feedback so the click never feels dead.
+const AuthLink = ({
+  className,
+  children,
+  onClick,
+}: {
+  className: string;
+  children: React.ReactNode;
+  onClick?: () => void;
+}) => {
+  const [loading, setLoading] = useState(false);
+
+  // If the user comes back with the browser Back button (page restored from
+  // bfcache), reset the loading state so the button works again.
+  useEffect(() => {
+    const reset = (e: PageTransitionEvent) => {
+      if (e.persisted) setLoading(false);
+    };
+    window.addEventListener("pageshow", reset);
+    return () => window.removeEventListener("pageshow", reset);
+  }, []);
+
+  return (
+    <a
+      href="/api/auth"
+      aria-busy={loading}
+      onClick={() => {
+        setLoading(true);
+        onClick?.();
+      }}
+      className={`${className} ${
+        loading ? "pointer-events-none opacity-70" : ""
+      }`}
+    >
+      {loading && (
+        <svg
+          className="mr-2 h-3.5 w-3.5 shrink-0 animate-spin"
+          viewBox="0 0 24 24"
+          fill="none"
+          aria-hidden
+        >
+          <circle
+            className="opacity-25"
+            cx="12"
+            cy="12"
+            r="10"
+            stroke="currentColor"
+            strokeWidth="4"
+          />
+          <path
+            className="opacity-90"
+            fill="currentColor"
+            d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+          />
+        </svg>
+      )}
+      {children}
+    </a>
+  );
+};
+
 const Navbar = ({ user }: { user: boolean }) => {
-  
   const [isOpen, setIsOpen] = useState(false);
 
   const closeMenu = () => setIsOpen(false);
@@ -13,7 +78,6 @@ const Navbar = ({ user }: { user: boolean }) => {
   return (
     <nav className="fixed top-0 inset-x-0 z-50 border-b border-white/5 bg-[#050509]/80 backdrop-blur-md">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2 shrink-0">
           <Logo />
@@ -35,7 +99,10 @@ const Navbar = ({ user }: { user: boolean }) => {
             Features
           </Link>
 
-          <Link href="#how-it-works" className="hover:text-white transition-colors">
+          <Link
+            href="#how-it-works"
+            className="hover:text-white transition-colors"
+          >
             Integration
           </Link>
 
@@ -55,19 +122,13 @@ const Navbar = ({ user }: { user: boolean }) => {
             </Link>
           ) : (
             <>
-              <Link
-                href="/api/auth"
-                className="text-xs font-medium text-zinc-400 hover:text-white transition-colors"
-              >
+              <AuthLink className="inline-flex items-center text-xs font-medium text-zinc-400 hover:text-white transition-colors">
                 Sign in
-              </Link>
+              </AuthLink>
 
-              <Link
-                href="/api/auth"
-                className="text-xs font-medium bg-white text-black px-4 py-2 rounded-full hover:bg-zinc-200 transition-colors"
-              >
+              <AuthLink className="inline-flex items-center text-xs font-medium bg-white text-black px-4 py-2 rounded-full hover:bg-zinc-200 transition-colors">
                 Get started
-              </Link>
+              </AuthLink>
             </>
           )}
         </div>
@@ -120,7 +181,6 @@ const Navbar = ({ user }: { user: boolean }) => {
       {isOpen && (
         <div className="md:hidden absolute top-16 inset-x-0 bg-[#050509]/95 backdrop-blur-xl border-b border-white/10 shadow-2xl">
           <div className="max-w-6xl mx-auto px-6 py-6 flex flex-col gap-5">
-
             <Link
               href="#features"
               onClick={closeMenu}
@@ -156,21 +216,14 @@ const Navbar = ({ user }: { user: boolean }) => {
                 </Link>
               ) : (
                 <>
-                  <Link
-                    href="/api/auth"
-                    onClick={closeMenu}
-                    className="text-center py-3 rounded-xl border border-white/10 text-white text-sm"
-                  >
+                  {/* menu stays open on purpose so the loading spinner is visible */}
+                  <AuthLink className="flex items-center justify-center py-3 rounded-xl border border-white/10 text-white text-sm">
                     Sign in
-                  </Link>
+                  </AuthLink>
 
-                  <Link
-                    href="/api/auth"
-                    onClick={closeMenu}
-                    className="text-center py-3 rounded-xl bg-white text-black text-sm font-medium"
-                  >
+                  <AuthLink className="flex items-center justify-center py-3 rounded-xl bg-white text-black text-sm font-medium">
                     Get started
-                  </Link>
+                  </AuthLink>
                 </>
               )}
             </div>
