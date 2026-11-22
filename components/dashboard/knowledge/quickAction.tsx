@@ -1,91 +1,78 @@
-import { Button } from "@/components/ui/button";
-import { File, Globe, Upload } from "lucide-react";
 
-// Displays quick actions that allow users to add
-// different knowledge sources to train the AI assistant.
+import { Button } from "@/components/ui/button";
+import { File, Globe, Upload, ArrowUpRight } from "lucide-react";
+
 const QuickActions = ({
   onOpenModal,
 }: {
-  // Callback received from the parent component.
-  // Opens the corresponding modal based on the selected action.
   onOpenModal: (tab: string) => void;
 }) => {
+  const actions = [
+    {
+      title: "Add Website",
+      description: "Crawl your website and sync its content automatically.",
+      tab: "website",
+      icon: Globe,
+      color: "indigo",
+    },
+    {
+      title: "Upload File",
+      description: "Import CSV files and documents into your knowledge base.",
+      tab: "upload",
+      icon: Upload,
+      color: "emerald",
+    },
+    {
+      title: "Manual Text",
+      description: "Add FAQs, internal notes, and policies manually.",
+      tab: "text",
+      icon: File,
+      color: "zinc",
+    },
+  ];
+
   return (
-    // Responsive grid.
-    // 1 column on mobile, 3 columns on desktop.
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 lg:gap-4">
+      {actions.map((action) => {
+        const Icon = action.icon;
 
-      {/* ---------------- Website Source ---------------- */}
-      <Button
-        variant="outline"
-        className="h-auto py-8 px-6 flex flex-col items-center justify-center gap-4 border-white/5 bg-[#0A0A0E] hover:bg-white/2 hover:border-indigo-500/30 transition-all hover:text-white group whitespace-normal"
-        onClick={() => onOpenModal("website")}
-      >
-        {/* Icon */}
-        <div className="p-3 rounded-full bg-indigo-500/10 border border-indigo-500/20 group-hover:bg-indigo-500/20 transition-colors">
-          <Globe className="w-6 h-6 text-indigo-400" />
-        </div>
+        return (
+          <Button
+            key={action.tab}
+            variant="outline"
+            onClick={() => onOpenModal(action.tab)}
+            className="group h-auto min-h-[108px] w-full justify-start whitespace-normal rounded-2xl border border-white/[0.07] bg-[#0A0A0E] p-4 text-left transition-all duration-200 hover:-translate-y-0.5 hover:border-indigo-500/30 hover:bg-white/[0.035] hover:text-white sm:p-5"
+          >
+            <div className="flex w-full items-center gap-4">
+              <div
+                className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border ${
+                  action.color === "indigo"
+                    ? "border-indigo-500/20 bg-indigo-500/10 text-indigo-400"
+                    : action.color === "emerald"
+                    ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-400"
+                    : "border-zinc-500/20 bg-zinc-500/10 text-zinc-400"
+                }`}
+              >
+                <Icon className="h-5 w-5" />
+              </div>
 
-        {/* Title & Description */}
-        <div className="space-y-1.5 text-center w-full">
-          <span className="text-sm font-medium block whitespace-normal">
-            Add Website
-          </span>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-sm font-semibold text-white">
+                    {action.title}
+                  </span>
 
-          <p className="text-xs text-zinc-500 font-normal leading-relaxed whitespace-normal wrap-break-word">
-            Crawl your website or specific pages to automatically keep your
-            knowledge base in sync.
-          </p>
-        </div>
-      </Button>
+                  <ArrowUpRight className="h-4 w-4 shrink-0 text-zinc-600 transition group-hover:text-white" />
+                </div>
 
-      {/* ---------------- File Upload ---------------- */}
-      <Button
-        variant="outline"
-        className="h-auto py-8 px-6 flex flex-col items-center justify-center gap-4 border-white/5 bg-[#0A0A0E] hover:bg-white/2 hover:border-emerald-500/30 transition-all hover:text-white group whitespace-normal"
-        onClick={() => onOpenModal("upload")}
-      >
-        {/* Icon */}
-        <div className="p-3 rounded-full bg-emerald-500/10 border border-emerald-500/20 group-hover:bg-emerald-500/20 transition-colors">
-          <Upload className="w-6 h-6 text-emerald-400" />
-        </div>
-
-        {/* Title & Description */}
-        <div className="space-y-1.5 text-center w-full">
-          <span className="text-sm font-medium block whitespace-normal">
-            Upload File
-          </span>
-
-          <p className="text-xs text-zinc-500 font-normal leading-relaxed whitespace-normal wrap-break-word">
-            Upload CSV files to instantly train your assistant with existing
-            documents.
-          </p>
-        </div>
-      </Button>
-
-      {/* ---------------- Manual Text ---------------- */}
-      <Button
-        variant="outline"
-        className="h-auto py-8 px-6 flex flex-col items-center justify-center gap-4 border-white/5 bg-[#0A0A0E] hover:bg-white/2 hover:border-zinc-500/30 transition-all hover:text-white group whitespace-normal"
-        onClick={() => onOpenModal("text")}
-      >
-        {/* Icon */}
-        <div className="p-3 rounded-full bg-zinc-500/10 border border-zinc-500/20 group-hover:bg-zinc-500/20 transition-colors">
-          <File className="w-6 h-6 text-zinc-400" />
-        </div>
-
-        {/* Title & Description */}
-        <div className="space-y-1.5 text-center w-full">
-          <span className="text-sm font-medium block whitespace-normal">
-            Manual Text
-          </span>
-
-          <p className="text-xs text-zinc-500 font-normal leading-relaxed whitespace-normal wrap-break-word">
-            Manually copy-paste FAQs, internal notes, or policies directly into
-            the editor for quick updates.
-          </p>
-        </div>
-      </Button>
+                <p className="mt-1 text-xs font-normal leading-relaxed text-zinc-500">
+                  {action.description}
+                </p>
+              </div>
+            </div>
+          </Button>
+        );
+      })}
     </div>
   );
 };
