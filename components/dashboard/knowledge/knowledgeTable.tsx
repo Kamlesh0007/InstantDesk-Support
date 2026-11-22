@@ -93,7 +93,7 @@ export const getStatusBadge = (status: SourceStatus) => {
       return (
         <Badge
           variant="outline"
-          className="border-emerald-500/20 bg-emerald-500/10 text-emerald-400 shadow-none"
+          className="whitespace-nowrap border-emerald-500/20 bg-emerald-500/10 text-emerald-400 shadow-none"
         >
           <span className="mr-1.5 h-1.5 w-1.5 rounded-full bg-emerald-400" />
           Active
@@ -104,7 +104,7 @@ export const getStatusBadge = (status: SourceStatus) => {
       return (
         <Badge
           variant="outline"
-          className="border-amber-500/20 bg-amber-500/10 text-amber-400 shadow-none"
+          className="whitespace-nowrap border-amber-500/20 bg-amber-500/10 text-amber-400 shadow-none"
         >
           <span className="mr-1.5 h-1.5 w-1.5 animate-pulse rounded-full bg-amber-400" />
           Training
@@ -115,7 +115,7 @@ export const getStatusBadge = (status: SourceStatus) => {
       return (
         <Badge
           variant="outline"
-          className="border-red-500/20 bg-red-500/10 text-red-400 shadow-none"
+          className="whitespace-nowrap border-red-500/20 bg-red-500/10 text-red-400 shadow-none"
         >
           <span className="mr-1.5 h-1.5 w-1.5 rounded-full bg-red-400" />
           Error
@@ -126,7 +126,7 @@ export const getStatusBadge = (status: SourceStatus) => {
       return (
         <Badge
           variant="outline"
-          className="border-zinc-500/20 bg-zinc-500/10 text-zinc-400 shadow-none"
+          className="whitespace-nowrap border-zinc-500/20 bg-zinc-500/10 text-zinc-400 shadow-none"
         >
           <span className="mr-1.5 h-1.5 w-1.5 rounded-full bg-zinc-500" />
           Excluded
@@ -210,11 +210,11 @@ const KnowledgeTable = ({
   // --------------------------------------------------
 
   const renderLoading = () => (
-    <div className="space-y-3 p-3 sm:p-5">
+    <div className="w-full min-w-0 space-y-3 p-3 sm:p-5">
       {Array.from({ length: 4 }).map((_, index) => (
         <div
           key={index}
-          className="flex items-center gap-3 rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4"
+          className="flex w-full min-w-0 items-center gap-3 overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.02] p-3 sm:p-4"
         >
           <Skeleton className="h-11 w-11 shrink-0 rounded-xl bg-white/[0.06]" />
 
@@ -223,7 +223,7 @@ const KnowledgeTable = ({
             <Skeleton className="h-3 w-1/2 bg-white/[0.06]" />
           </div>
 
-          <Skeleton className="h-6 w-16 rounded-full bg-white/[0.06]" />
+          <Skeleton className="h-6 w-16 shrink-0 rounded-full bg-white/[0.06]" />
         </div>
       ))}
     </div>
@@ -234,7 +234,7 @@ const KnowledgeTable = ({
   // --------------------------------------------------
 
   const renderEmptyState = () => (
-    <div className="flex flex-col items-center justify-center px-4 py-16 text-center">
+    <div className="flex w-full min-w-0 flex-col items-center justify-center px-4 py-16 text-center">
       <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-white/[0.08] bg-white/[0.03]">
         <Database className="h-6 w-6 text-zinc-500" />
       </div>
@@ -247,7 +247,7 @@ const KnowledgeTable = ({
 
       <p className="mt-2 max-w-xs text-xs leading-relaxed text-zinc-500">
         {sources.length > 0
-          ? "Try changing your search query or filters to find what you're looking for."
+          ? "Try changing your search query or filters."
           : "Add a website, upload a document, or manually add text to start building your knowledge base."}
       </p>
 
@@ -269,24 +269,24 @@ const KnowledgeTable = ({
   // --------------------------------------------------
 
   const renderMobileCards = () => (
-    <div className="space-y-3 p-3 sm:p-4 md:hidden">
+    <div className="grid w-full min-w-0 grid-cols-1 gap-3 overflow-hidden p-3 sm:p-4 md:hidden">
       {filteredSources.map((source) => (
         <div
           key={source.id}
-          className="group relative overflow-hidden rounded-2xl border border-white/[0.08] bg-gradient-to-br from-[#171721] via-[#111119] to-[#0b0b10] p-4 shadow-lg shadow-black/10 transition-all duration-200 active:scale-[0.99]"
+          className="relative w-full min-w-0 max-w-full overflow-hidden rounded-2xl border border-white/[0.08] bg-gradient-to-br from-[#171721] via-[#111119] to-[#0b0b10] p-3.5 shadow-lg shadow-black/10 transition-all duration-200 sm:p-4"
         >
           {/* Top Highlight */}
           <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
 
           {/* Source Header */}
-          <div className="flex items-start gap-3">
+          <div className="flex min-w-0 items-start gap-2.5 sm:gap-3">
             {/* Icon */}
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-indigo-500/20 bg-indigo-500/[0.08]">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-indigo-500/20 bg-indigo-500/[0.08] sm:h-11 sm:w-11">
               {getTypeIcon(source.type as SourceType)}
             </div>
 
             {/* Name and URL */}
-            <div className="min-w-0 flex-1 pt-0.5">
+            <div className="min-w-0 flex-1 overflow-hidden pt-0.5">
               <h3 className="truncate text-sm font-semibold text-zinc-100">
                 {source.name || "Untitled source"}
               </h3>
@@ -297,16 +297,16 @@ const KnowledgeTable = ({
             </div>
 
             {/* Status */}
-            <div className="shrink-0">
+            <div className="max-w-[100px] shrink-0">
               {getStatusBadge(source.status as SourceStatus)}
             </div>
           </div>
 
           {/* Divider */}
-          <div className="my-4 h-px bg-white/[0.06]" />
+          <div className="my-4 h-px w-full bg-white/[0.06]" />
 
           {/* Footer */}
-          <div className="flex items-center justify-between gap-2">
+          <div className="flex min-w-0 flex-wrap items-center justify-between gap-3">
             <div className="flex min-w-0 flex-col gap-1.5">
               <span className="w-fit rounded-md border border-white/[0.07] bg-white/[0.03] px-2 py-1 text-[10px] font-medium uppercase tracking-wider text-zinc-400">
                 {source.type}
@@ -342,8 +342,8 @@ const KnowledgeTable = ({
   // --------------------------------------------------
 
   const renderDesktopTable = () => (
-    <div className="hidden overflow-x-auto md:block">
-      <Table>
+    <div className="hidden w-full min-w-0 overflow-x-auto md:block">
+      <Table className="w-full min-w-[650px]">
         <TableHeader>
           <TableRow className="border-white/[0.06] hover:bg-transparent">
             <TableHead className="pl-5 text-xs font-medium uppercase tracking-wider text-zinc-500">
@@ -438,13 +438,13 @@ const KnowledgeTable = ({
   // --------------------------------------------------
 
   return (
-    <Card className="overflow-hidden rounded-2xl border-white/[0.07] bg-[#0A0A0E] shadow-xl shadow-black/10">
+    <Card className="w-full min-w-0 max-w-full overflow-hidden rounded-2xl border-white/[0.07] bg-[#0A0A0E] shadow-xl shadow-black/10">
       {/* Header */}
-      <CardHeader className="space-y-4 p-4 sm:p-5">
-        <div className="flex items-center justify-between gap-3">
-          <div>
+      <CardHeader className="w-full min-w-0 space-y-4 p-3 sm:p-5">
+        <div className="flex min-w-0 items-center justify-between gap-3">
+          <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-indigo-500/20 bg-indigo-500/10">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-indigo-500/20 bg-indigo-500/10">
                 <Database className="h-4 w-4 text-indigo-400" />
               </div>
 
@@ -462,7 +462,7 @@ const KnowledgeTable = ({
           {activeFilterCount > 0 && (
             <Badge
               variant="outline"
-              className="border-indigo-500/20 bg-indigo-500/10 text-indigo-400"
+              className="shrink-0 border-indigo-500/20 bg-indigo-500/10 text-indigo-400"
             >
               {activeFilterCount} filters
             </Badge>
@@ -470,7 +470,7 @@ const KnowledgeTable = ({
         </div>
 
         {/* Search and Filter */}
-        <div className="flex items-center gap-2">
+        <div className="flex w-full min-w-0 items-center gap-2">
           <div className="relative min-w-0 flex-1">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
 
@@ -478,7 +478,7 @@ const KnowledgeTable = ({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search your sources..."
-              className="h-11 w-full rounded-xl border-white/[0.08] bg-white/[0.035] pl-10 text-sm text-white placeholder:text-zinc-500 focus-visible:ring-indigo-500/40"
+              className="h-11 w-full min-w-0 rounded-xl border-white/[0.08] bg-white/[0.035] pl-10 text-sm text-white placeholder:text-zinc-500 focus-visible:ring-indigo-500/40"
             />
           </div>
 
@@ -500,7 +500,7 @@ const KnowledgeTable = ({
 
         {/* Filter Dialog */}
         <Dialog open={isFilterOpen} onOpenChange={setIsFilterOpen}>
-          <DialogContent className="border-white/10 bg-[#0e0e12] sm:max-w-sm">
+          <DialogContent className="w-[calc(100%-2rem)] max-w-sm border-white/10 bg-[#0e0e12]">
             <DialogHeader>
               <DialogTitle className="text-white">
                 Filter sources
@@ -593,7 +593,7 @@ const KnowledgeTable = ({
       </CardHeader>
 
       {/* Content */}
-      <CardContent className="border-t border-white/[0.05] p-0">
+      <CardContent className="w-full min-w-0 max-w-full overflow-hidden border-t border-white/[0.05] p-0">
         {isLoading ? (
           renderLoading()
         ) : filteredSources.length === 0 ? (

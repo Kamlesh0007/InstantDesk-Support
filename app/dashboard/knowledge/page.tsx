@@ -143,13 +143,13 @@ const Page = () => {
             </div>
           </div>
 
-          <Button
-            onClick={() => openModal("website")}
-            className="h-11 w-full rounded-xl bg-white px-5 font-medium text-black shadow-lg shadow-white/5 transition hover:bg-zinc-200 sm:w-auto"
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            Add Knowledge
-          </Button>
+        <Button
+  onClick={() => openModal("website")}
+  className="flex h-11 w-full items-center justify-center rounded-xl bg-white px-4 text-sm font-semibold text-black shadow-lg shadow-white/5 transition hover:bg-zinc-200 sm:h-10 sm:w-auto sm:px-5"
+>
+  <Plus className="mr-2 h-4 w-4 shrink-0" />
+  <span className="whitespace-nowrap">Add Knowledge</span>
+</Button>
         </section>
 
         {/* Quick Actions */}
