@@ -1,9 +1,16 @@
+
 "use client";
+
+import React, { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 
 import SectionFormFields from "@/components/dashboard/sections/sectionFormFields";
 import SectionsTable from "@/components/dashboard/sections/sectionTable";
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+
 import {
   Sheet,
   SheetContent,
@@ -11,9 +18,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { AlertCircle, Plus } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import React, { useEffect, useState } from "react";
+
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,9 +29,16 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { useSearchParams } from "next/navigation";
 
-// Shape of a knowledge source as returned by /api/knowledge/fetch
+import {
+  AlertCircle,
+  Plus,
+  Layers3,
+  Sparkles,
+  Trash2,
+} from "lucide-react";
+
+// Shape of a knowledge source as returned by the API
 interface KnowledgeSource {
   id: string;
   name: string;
@@ -34,7 +46,7 @@ interface KnowledgeSource {
   status: string;
 }
 
-// Default/empty state for the section creation form
+// Default form data
 const INITIAL_FORM_DATA: SectionFormData = {
   name: "",
   description: "",
@@ -45,51 +57,40 @@ const INITIAL_FORM_DATA: SectionFormData = {
 };
 
 const Page = () => {
-  // Controls whether the create/preview side panel (Sheet) is open
-  const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const searchParams = useSearchParams();
 
+  // Sheet and dialog states
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
-  // The section currently being created or previewed; null when the sheet is closed
-  const [selectedSection, setSelectedSection] = useState<Section | null>(null);
+  // Selected section
+  const [selectedSection, setSelectedSection] =
+    useState<Section | null>(null);
 
-  // All knowledge sources available to attach to a section
-  const [knowledgeSources, setKnowledgeSources] = useState<KnowledgeSource[]>(
-    []
-  );
+  // Knowledge sources
+  const [knowledgeSources, setKnowledgeSources] = useState<
+    KnowledgeSource[]
+  >([]);
 
-  // IDs of knowledge sources selected for the section currently being edited
   const [selectedSources, setSelectedSources] = useState<string[]>([]);
-
-  // Loading flags — kept separate since sources and sections load independently
   const [isLoadingSources, setIsLoadingSources] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
 
-  // All sections belonging to the user, shown in the main table
+  // Sections
   const [sections, setSections] = useState<Section[]>([]);
   const [isLoadingSections, setIsLoadingSections] = useState(true);
 
-  // Form state bound to the create/edit panel
-  const [formData, setFormData] = useState<SectionFormData>(INITIAL_FORM_DATA);
+  // Form
+  const [formData, setFormData] =
+    useState<SectionFormData>(INITIAL_FORM_DATA);
 
+  // Other states
+  const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState("");
 
-  const searchParams = useSearchParams();
+  // Create a new section
+  const handleCreateSection = () => {
+    setError("");
 
-  // Load the user's sections once on mount
-  useEffect(() => {
-    fetchSections();
-  }, []);
-
-  useEffect(() => {
-  if (searchParams.get("createSection") === "true") {
-handleCreateSection();
-  }
-}, [searchParams]);
-
-  // Opens the sheet in "create" mode with a blank draft section and empty form
-  const handleCreateSection = async () => {
-     setError("");
     setSelectedSection({
       id: "new",
       name: "",
@@ -99,47 +100,46 @@ handleCreateSection();
       scopeLabel: "",
       status: "draft",
     });
+
     setSelectedSources([]);
     setFormData(INITIAL_FORM_DATA);
     setIsSheetOpen(true);
   };
 
-  // Load available knowledge sources once on mount, independent of sections
+  // Automatically open create section from URL parameter
   useEffect(() => {
-    const fetchKnowledgeSources = async () => {
-      try {
-        const res = await fetch("/api/knowledge/fetch");
-        const data = await res.json();
-        setKnowledgeSources(data.sources || []);
-      } catch (error) {
-        console.error("Failed to fetch knowledge sources:", error);
-      } finally {
-        setIsLoadingSources(false);
-      }
-    };
-    fetchKnowledgeSources();
-  }, []);
+    if (searchParams.get("createSection") === "true") {
+      handleCreateSection();
+    }
+  }, [searchParams]);
 
-  // Fetches all sections and normalizes the API response into the shape the UI expects
+  // Fetch sections
   const fetchSections = async () => {
     try {
       setIsLoadingSections(true);
-      const res = await fetch("/api/section/fetch");
-      const data = await res.json();
 
-      // Map raw snake_case API fields to the camelCase Section type used in the UI
-      const transformedSections: Section[] = data.map((section: any) => ({
-        id: section.id,
-        name: section.name,
-        description: section.description,
-        sourceCount: section.source_ids?.length || 0,
-        source_ids: section.source_ids || [],
-        tone: section.tone as Tone,
-        scopeLabel: section.allowed_topics || "General",
-        allowed_topics: section.allowed_topics,
-        blocked_topics: section.blocked_topics,
-        status: section.status as SectionStatus,
-      }));
+      const response = await fetch("/api/section/fetch");
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch sections");
+      }
+
+      const data = await response.json();
+
+      const transformedSections: Section[] = data.map(
+        (section: any) => ({
+          id: section.id,
+          name: section.name,
+          description: section.description,
+          sourceCount: section.source_ids?.length || 0,
+          source_ids: section.source_ids || [],
+          tone: section.tone as Tone,
+          scopeLabel: section.allowed_topics || "General",
+          allowed_topics: section.allowed_topics,
+          blocked_topics: section.blocked_topics,
+          status: section.status as SectionStatus,
+        })
+      );
 
       setSections(transformedSections);
     } catch (error) {
@@ -149,30 +149,55 @@ handleCreateSection();
     }
   };
 
-  // Validates and submits the create-section form
+  // Initial fetch
+  useEffect(() => {
+    fetchSections();
+  }, []);
+
+  // Fetch knowledge sources
+  useEffect(() => {
+    const fetchKnowledgeSources = async () => {
+      try {
+        const response = await fetch("/api/knowledge/fetch");
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch knowledge sources");
+        }
+
+        const data = await response.json();
+
+        setKnowledgeSources(data.sources || []);
+      } catch (error) {
+        console.error("Failed to fetch knowledge sources:", error);
+      } finally {
+        setIsLoadingSources(false);
+      }
+    };
+
+    fetchKnowledgeSources();
+  }, []);
+
+  // Save section
   const handleSaveSection = async () => {
-    // Basic client-side validation before hitting the API
-   if (!formData.name.trim()) {
-  setError("Please enter a section name.");
-  return;
-}
+    if (!formData.name.trim()) {
+      setError("Please enter a section name.");
+      return;
+    }
 
-if (!formData.description.trim()) {
-  setError("Please enter a description.");
-  return;
-}
+    if (!formData.description.trim()) {
+      setError("Please enter a description.");
+      return;
+    }
 
-if (selectedSources.length === 0) {
-  setError("Please select at least one knowledge source.");
-  return;
-}
+    if (selectedSources.length === 0) {
+      setError("Please select at least one knowledge source.");
+      return;
+    }
 
-setError("");
-
+    setError("");
     setIsSaving(true);
 
     try {
-      // Bundle form fields with selected source IDs and force status to active on creation
       const sectionData = {
         ...formData,
         sourceIds: selectedSources,
@@ -181,7 +206,9 @@ setError("");
 
       const response = await fetch("/api/section/create", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify(sectionData),
       });
 
@@ -189,56 +216,59 @@ setError("");
         throw new Error("Failed to create section");
       }
 
-      // Refresh the sections list and close the panel on success
       await fetchSections();
+
       setIsSheetOpen(false);
+      setSelectedSection(null);
     } catch (error) {
       console.error("Failed to save section:", error);
-        setError("Failed to create section. Please try again.");
+      setError("Failed to create section. Please try again.");
     } finally {
       setIsSaving(false);
     }
   };
 
-  // Deletes the currently selected section after user confirmation
+  // Delete section
   const handleDeleteSection = async () => {
-    setError("")
-  if (!selectedSection || selectedSection.id === "new") return;
+    setError("");
 
-  try {
-    setIsSaving(true);
+    if (!selectedSection || selectedSection.id === "new") return;
 
-    const response = await fetch("/api/section/delete", {
-      method: "DELETE",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        id: selectedSection.id,
-      }),
-    });
+    try {
+      setIsSaving(true);
 
-    if (!response.ok) {
-      throw new Error("Failed to delete section");
+      const response = await fetch("/api/section/delete", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          id: selectedSection.id,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to delete section");
+      }
+
+      await fetchSections();
+
+      setIsDeleteDialogOpen(false);
+      setIsSheetOpen(false);
+      setSelectedSection(null);
+    } catch (error) {
+      console.error("Failed to delete section:", error);
+      setError("Failed to delete section. Please try again.");
+    } finally {
+      setIsSaving(false);
     }
+  };
 
-    await fetchSections();
-
-    setIsDeleteDialogOpen(false);
-    setIsSheetOpen(false);
-    setSelectedSection(null);
-  } catch (error) {
-    console.error("Failed to delete section:", error);
-    setError("Failed to delete section. Please try again.");
-  } finally {
-    setIsSaving(false);
-  }
-};
-
-  // Opens the sheet in read-only "preview" mode, pre-filled with an existing section's data
-  const handlePreviewSection = async (section: Section) => {
+  // Preview existing section
+  const handlePreviewSection = (section: Section) => {
     setError("");
     setSelectedSection(section);
+
     setFormData({
       name: section.name,
       description: section.description,
@@ -247,76 +277,140 @@ setError("");
       blockedTopics: section.blocked_topics || "",
       fallbackBehavior: "escalate",
     });
+
     setSelectedSources(section.source_ids || []);
     setIsSheetOpen(true);
   };
 
-  // Anything other than the "new" draft is treated as an existing section being viewed
+  // Existing sections are read-only
   const isPreviewMode = selectedSection?.id !== "new";
 
   return (
-    <div className="p-8 space-y-6">
-      {/* Page header with title and create-section entry point */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-white">Sections</h1>
-          <p className="text-zinc-400 mt-1">
-            Define behavior and tone for different topics.
-          </p>
-        </div>
-        <Button
-          onClick={handleCreateSection}
-          className="bg-white text-black hover:bg-zinc-200"
+    <div className="min-h-full w-full min-w-0 space-y-6 px-4 py-5 sm:space-y-8 sm:px-6 sm:py-7 lg:px-8">
+
+      {/* Page Header */}
+     
+<div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+
+  {/* Title and Description */}
+  <div className="flex min-w-0 items-start gap-3">
+    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-violet-500/20 bg-violet-500/10 sm:h-11 sm:w-11">
+      <Layers3 className="h-5 w-5 text-violet-400" />
+    </div>
+
+    <div className="min-w-0 flex-1">
+      <div className="flex flex-wrap items-center gap-2">
+        <h1 className="text-xl font-semibold tracking-tight text-white sm:text-3xl">
+          Sections
+        </h1>
+
+        <Badge
+          variant="outline"
+          className="rounded-md border-violet-500/20 bg-violet-500/10 px-2 py-0.5 text-[10px] font-medium text-violet-300 sm:text-xs"
         >
-          <Plus className="w-4 h-4 mr-2" />
-          Create Section
-        </Button>
+          AI Configuration
+        </Badge>
       </div>
 
-      {/* Table of existing sections (currently commented out / pending implementation) */}
-      <Card className="border-white/5 bg-[#0A0A0E]">
-        <CardContent className="p-0">
-          <SectionsTable
-            sections={sections}
-            isLoading={isLoadingSections}
-            onPreview={handlePreviewSection}
-            onCreateSection={handleCreateSection}
-          />
-        </CardContent>
-      </Card>
+      <p className="mt-1 max-w-md text-xs leading-relaxed text-zinc-400 sm:text-sm">
+        Define how your AI assistant behaves and handles different topics.
+      </p>
+    </div>
+  </div>
 
-      {/* Slide-over panel used for both creating a new section and previewing an existing one */}
-      <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-        <SheetContent  className="w-full sm:max-w-lg border-l border-white/10 bg-[#0A0A0E] p-0 shadow-2xl flex flex-col h-full">
+  {/* Create Button */}
+  <Button
+    onClick={handleCreateSection}
+    className="h-10 w-full shrink-0 rounded-xl bg-white px-4 text-sm font-medium text-black shadow-lg shadow-white/5 transition-all hover:bg-zinc-200 sm:h-11 sm:w-auto sm:px-5"
+  >
+    <Plus className="mr-2 h-4 w-4" />
+    Create Section
+  </Button>
+
+</div>
+
+      {/* Section Content */}
+      <div className="space-y-4">
+
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h2 className="text-sm font-medium text-white">
+              Your Sections
+            </h2>
+            <p className="mt-1 text-xs text-zinc-500">
+              Manage your AI assistant&apos;s topic-specific behavior.
+            </p>
+          </div>
+
+          <div className="hidden items-center gap-2 rounded-lg border border-white/[0.08] bg-white/[0.03] px-3 py-2 sm:flex">
+            <Sparkles className="h-3.5 w-3.5 text-violet-400" />
+            <span className="text-xs text-zinc-400">
+              AI-powered responses
+            </span>
+          </div>
+        </div>
+
+        <Card className="overflow-hidden rounded-2xl border border-white/[0.08] bg-[#0A0A0E]/80 shadow-xl shadow-black/10">
+          <CardContent className="p-0">
+            <SectionsTable
+              sections={sections}
+              isLoading={isLoadingSections}
+              onPreview={handlePreviewSection}
+              onCreateSection={handleCreateSection}
+            />
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Create / Preview Sheet */}
+      <Sheet
+        open={isSheetOpen}
+        onOpenChange={(open) => {
+          if (!isSaving) {
+            setIsSheetOpen(open);
+          }
+        }}
+      >
+        <SheetContent
+          side="right"
+          className="flex h-dvh w-full flex-col gap-0 overflow-hidden border-l border-white/10 bg-[#0A0A0E] p-0 shadow-2xl sm:max-w-lg"
+        >
           {selectedSection && (
             <>
-              {/* Header text changes depending on create vs. preview mode */}
-              <SheetHeader className="p-6 border-b border-white/5">
-                <SheetTitle className="text-xl text-white">
+              {/* Sheet Header */}
+              <SheetHeader className="shrink-0 border-b border-white/[0.08] px-5 py-5 pr-14 text-left sm:px-6 sm:py-6">
+                <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl border border-violet-500/20 bg-violet-500/10">
+                  <Sparkles className="h-5 w-5 text-violet-400" />
+                </div>
+
+                <SheetTitle className="text-xl font-semibold text-white">
                   {selectedSection.id === "new"
                     ? "Create Section"
                     : "View Section"}
                 </SheetTitle>
-                <SheetDescription className="text-zinc-500">
+
+                <SheetDescription className="text-sm leading-relaxed text-zinc-500">
                   {selectedSection.id === "new"
-                    ? "Configure how the AI behaves for this specific topic."
-                    : "Review section configuration and data sources."}
+                    ? "Configure how your AI assistant behaves for this specific topic."
+                    : "Review your section configuration and connected knowledge sources."}
                 </SheetDescription>
               </SheetHeader>
-{error && (
-  <div className="px-6 pt-4">
-    <Badge
-      variant="destructive"
-      className="w-full justify-start rounded-md py-2 px-3 text-sm gap-2 bg-red-500/10 border border-red-500/20 text-red-400"
-    >
-      <AlertCircle className="h-4 w-4 shrink-0" />
-      {error}
-    </Badge>
-  </div>
-)}
-              {/* Form fields for name, description, tone, topics, and source selection
-                  (currently commented out / pending implementation) */}
-              <div className="flex-1 overflow-y-auto px-6 py-0 space-y-8">
+
+              {/* Error Message */}
+              {error && (
+                <div className="shrink-0 px-5 pt-4 sm:px-6">
+                  <Badge
+                    variant="destructive"
+                    className="flex w-full items-start justify-start gap-2 whitespace-normal rounded-lg border border-red-500/20 bg-red-500/10 px-3 py-2.5 text-left text-sm leading-relaxed text-red-400"
+                  >
+                    <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+                    {error}
+                  </Badge>
+                </div>
+              )}
+
+              {/* Scrollable Form */}
+              <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-5 sm:px-6">
                 <SectionFormFields
                   formData={formData}
                   setFormData={setFormData}
@@ -328,90 +422,126 @@ setError("");
                 />
               </div>
 
-              {/* Create button only shown for new, unsaved drafts */}
+              {/* Create Action */}
               {selectedSection.id === "new" && (
-                <div className="p-6 border-t border-white/5">
+                <div className="shrink-0 border-t border-white/[0.08] bg-[#0A0A0E] p-4 sm:p-6">
                   <Button
-                    className="w-full bg-white text-black hover:bg-zinc-200"
+                    className="h-11 w-full rounded-xl bg-white font-medium text-black shadow-lg shadow-white/5 transition hover:bg-zinc-200"
                     onClick={handleSaveSection}
                     disabled={isSaving}
                   >
-                    {isSaving ? "Creating..." : "Create Section"}
+                    {isSaving ? (
+                      <>
+                        <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-black/30 border-t-black" />
+                        Creating...
+                      </>
+                    ) : (
+                      <>
+                        <Plus className="mr-2 h-4 w-4" />
+                        Create Section
+                      </>
+                    )}
                   </Button>
                 </div>
               )}
 
-              {/* Danger zone / delete action only shown for existing, saved sections */}
+              {/* Delete Action */}
               {selectedSection.id !== "new" && (
-                <div className="p-6 bg-red-500/5 border-t border-red-500/10">
-                  <h5 className="text-sm font-medium text-red-400 mb-1">
-                    Danger Zone
-                  </h5>
-                  <p className="text-xs text-red-500/70 mb-3">
-                    Deleting this section will remove all associated routing
-                    rules.
-                  </p>
+                <div className="shrink-0 border-t border-red-500/10 bg-red-500/[0.03] p-4 sm:p-6">
+                  <div className="mb-3">
+                    <div className="flex items-center gap-2">
+                      <Trash2 className="h-4 w-4 text-red-400" />
+                      <h5 className="text-sm font-medium text-red-400">
+                        Danger Zone
+                      </h5>
+                    </div>
 
-     <Button
-  variant="destructive"
-  size="sm"
-  className="w-full bg-red-500/10 text-red-500 border border-red-500/20 hover:bg-red-500/20 shadow-none"
-  onClick={() => {
-    setIsSheetOpen(false)
-    setIsDeleteDialogOpen(true)
-    
-  }}
-  disabled={isSaving}
->
-  Delete Section
-</Button>
+                    <p className="mt-1 text-xs leading-relaxed text-zinc-500">
+                      Deleting this section will remove all associated
+                      routing rules.
+                    </p>
+                  </div>
+
+                  <Button
+                    variant="destructive"
+                    className="h-10 w-full rounded-xl border border-red-500/20 bg-red-500/10 text-red-400 shadow-none transition hover:bg-red-500/20 hover:text-red-300"
+                    onClick={() => {
+                      setError("");
+                      setIsSheetOpen(false);
+                      setIsDeleteDialogOpen(true);
+                    }}
+                    disabled={isSaving}
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Delete Section
+                  </Button>
                 </div>
               )}
             </>
           )}
         </SheetContent>
       </Sheet>
-<AlertDialog
-  open={isDeleteDialogOpen}
-  onOpenChange={(open) => {
-    if (!isSaving) {
 
-      setIsDeleteDialogOpen(open);
-    }
-  }}>
-  <AlertDialogContent className="border-zinc-800 bg-[#0A0A0E]">
-    <AlertDialogHeader>
-      <AlertDialogTitle className="text-white">
-        Delete Section?
-      </AlertDialogTitle>
-
-      <AlertDialogDescription className="text-zinc-400">
-        Are you sure you want to delete{" "}
-        <span className="font-medium text-white">
-          "{selectedSection?.name}"
-        </span>
-        ?
-        <br />
-        <br />
-        This action cannot be undone.
-      </AlertDialogDescription>
-    </AlertDialogHeader>
-
-    <AlertDialogFooter>
-      <AlertDialogCancel disabled={isSaving} onClick={()=> setIsSheetOpen(true)}>
-        Cancel
-      </AlertDialogCancel>
-
-      <AlertDialogAction
-        onClick={handleDeleteSection}
-        disabled={isSaving}
-        className="bg-red-600 hover:bg-red-700"
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={(open) => {
+          if (!isSaving) {
+            setIsDeleteDialogOpen(open);
+          }
+        }}
       >
-        {isSaving ? "Deleting..." : "Delete"}
-      </AlertDialogAction>
-    </AlertDialogFooter>
-  </AlertDialogContent>
-</AlertDialog>
+        <AlertDialogContent className="w-[calc(100%-2rem)] max-w-md rounded-2xl border border-white/10 bg-[#0A0A0E] text-white shadow-2xl">
+          <AlertDialogHeader>
+            <div className="mb-2 flex h-11 w-11 items-center justify-center rounded-xl border border-red-500/20 bg-red-500/10">
+              <Trash2 className="h-5 w-5 text-red-400" />
+            </div>
+
+            <AlertDialogTitle className="text-lg font-semibold text-white">
+              Delete Section?
+            </AlertDialogTitle>
+
+            <AlertDialogDescription className="text-sm leading-relaxed text-zinc-400">
+              Are you sure you want to delete{" "}
+              <span className="font-medium text-white">
+                &quot;{selectedSection?.name}&quot;
+              </span>
+              ? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          <AlertDialogFooter className="mt-3 flex-col-reverse gap-2 sm:flex-row">
+            <AlertDialogCancel
+              disabled={isSaving}
+              onClick={() => setIsSheetOpen(true)}
+              className="mt-0 h-10 w-full rounded-xl border border-white/10 bg-white/[0.04] text-zinc-300 hover:bg-white/[0.08] hover:text-white sm:w-auto"
+            >
+              Cancel
+            </AlertDialogCancel>
+
+            <AlertDialogAction
+              onClick={(event) => {
+                event.preventDefault();
+                handleDeleteSection();
+              }}
+              disabled={isSaving}
+              className="h-10 w-full rounded-xl bg-red-600 font-medium text-white hover:bg-red-700 sm:w-auto"
+            >
+              {isSaving ? (
+                <>
+                  <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                  Deleting...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Delete
+                </>
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
